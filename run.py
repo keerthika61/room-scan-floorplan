@@ -29,6 +29,7 @@ from pipeline.scan_reader import load_scan
 from pipeline.pointcloud import build_point_cloud, save_point_cloud
 from pipeline.planes import find_floor_ceiling
 from pipeline.room_outline import compute_room_outline
+from pipeline.openings import detect_openings
 from pipeline.render import render_floor_plan
 from pipeline.result_schema import build_result
 
@@ -51,12 +52,13 @@ def process(scan_dir: str, stride: int, out_root: str) -> dict:
     print(f"[3/5] Floor/ceiling: {height.note}")
 
     outline = compute_room_outline(pts, floor_y)
+    openings = detect_openings(pts, floor_y, outline)
     print(f"[4/5] Outline: {len(outline.polygon_xz)} walls, "
-          f"area {outline.floor_area_m2:.2f} m^2")
+          f"area {outline.floor_area_m2:.2f} m^2, {len(openings)} openings")
 
     render_floor_plan(pts, floor_y, outline, height,
-                      out_dir / "floor_plan.png", title=scan.name)
-    result = build_result(scan.name, height, outline, len(pts))
+                      out_dir / "floor_plan.png", title=scan.name, openings=openings)
+    result = build_result(scan.name, height, outline, len(pts), openings=openings)
     result["timing_seconds"] = round(time.time() - t0, 1)
 
     with open(out_dir / "result.json", "w") as f:

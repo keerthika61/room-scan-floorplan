@@ -27,7 +27,8 @@ def _measure(value, ci, unit, method, note=""):
     }
 
 
-def build_result(scan_name: str, height, outline, n_points: int) -> dict[str, Any]:
+def build_result(scan_name: str, height, outline, n_points: int,
+                 openings=None) -> dict[str, Any]:
     """Compose the full result dict for a scan from the stage outputs."""
     walls = [
         {
@@ -37,6 +38,16 @@ def build_result(scan_name: str, height, outline, n_points: int) -> dict[str, An
         for i, (L, ci) in enumerate(
             zip(outline.wall_lengths_m, outline.wall_length_ci_m)
         )
+    ]
+
+    openings_json = [
+        {
+            "wall_index": o.wall_index,
+            "kind": o.kind,
+            "width": _measure(o.width_m, o.width_ci_m, "m", "wall_density_gap"),
+            "center_xz": [round(o.center_xz[0], 4), round(o.center_xz[1], 4)],
+        }
+        for o in (openings or [])
     ]
 
     ceiling = _measure(
@@ -67,6 +78,8 @@ def build_result(scan_name: str, height, outline, n_points: int) -> dict[str, An
             ),
             "orientation_deg": round(float(outline.orientation_deg), 2),
             "segmentation_mode": outline.segmentation_mode,
+            "opening_count": len(openings_json),
+            "openings": openings_json,
             "walls": walls,
             "outline_polygon_xz": [
                 [round(float(x), 4), round(float(z), 4)]
@@ -77,6 +90,8 @@ def build_result(scan_name: str, height, outline, n_points: int) -> dict[str, An
             "Per-room segmentation isolates the dominant enclosed room by "
             "breaking narrow doorway necks; captures with no single compact "
             "room fall back to the full footprint (see segmentation_mode).",
-            "Openings (doors/windows) detection not yet implemented at this tier.",
+            "Openings are detected as door/window-sized gaps in wall-height "
+            "density; very jagged outlines can suppress detection on some "
+            "walls (conservative: prefers missing an opening to inventing one).",
         ],
     }

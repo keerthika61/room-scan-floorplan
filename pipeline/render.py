@@ -31,6 +31,7 @@ def render_floor_plan(
     height,                  # HeightResult
     out_path: str | Path,
     title: str = "",
+    openings=None,           # list[Opening] or None
 ) -> Path:
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -60,6 +61,15 @@ def render_floor_plan(
         ax.text(mid[0], mid[1], f"{L:.2f} m", fontsize=7,
                 color="#2c3e50", ha="center", va="center", zorder=5,
                 bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="none", alpha=0.7))
+
+    # Openings (doors/windows): mark their centers and widths.
+    for o in (openings or []):
+        cx, cz = o.center_xz
+        color = "#2980b9" if o.kind == "door" else "#16a085"
+        ax.scatter([cx], [cz], c=color, s=60, marker="s", zorder=6,
+                   edgecolors="white", linewidths=0.8)
+        ax.text(cx, cz, f"  {o.kind} {o.width_m:.2f}m", fontsize=7,
+                color=color, ha="left", va="center", zorder=6)
 
     ax.set_aspect("equal")
     ax.set_xlabel("X (m)")
