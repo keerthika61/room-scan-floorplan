@@ -11,8 +11,9 @@ The first-pass footprint traced raw floor coverage and produced a jagged
      the wall points and rotate the cloud so walls line up with the X/Z
      axes. This lets us snap to clean right angles later.
 
-  2. Occupancy: in the rotated frame we rasterize the floor region into a
-     top-down grid and keep the largest filled component (the room).
+  2. Segmentation: in the rotated frame `room_segment` isolates the dominant
+     enclosed room (breaking narrow doorway necks), or falls back to the full
+     footprint when no single compact room dominates.
 
   3. Outline: we trace the contour, simplify it, then SNAP each edge to the
      nearest axis (horizontal or vertical). Short spurs are merged. The
@@ -35,7 +36,6 @@ GRID_RES_M = 0.02
 WALL_BAND_LOW_M = 0.3      # wall slice: this far above floor ...
 WALL_BAND_HIGH_M = 1.5     # ... up to here (avoid floor + ceiling clutter)
 FOOTPRINT_BAND_M = 0.12
-CLOSE_KERNEL_CELLS = 9
 SIMPLIFY_TOL_M = 0.10
 MIN_WALL_LEN_M = 0.25      # drop outline edges shorter than this
 
@@ -92,31 +92,6 @@ def estimate_orientation(points: np.ndarray, floor_y: float) -> float:
 def _rotation_matrix(theta: float) -> np.ndarray:
     c, s = np.cos(theta), np.sin(theta)
     return np.array([[c, -s], [s, c]])
-
-
-def _rasterize(xz: np.ndarray):
-    mn = xz.min(0) - 0.15
-    size = np.ceil((xz.max(0) + 0.15 - mn) / GRID_RES_M).astype(int) + 1
-    grid = np.zeros((size[1], size[0]), np.uint8)
-    cols = ((xz[:, 0] - mn[0]) / GRID_RES_M).astype(int)
-    rows = ((xz[:, 1] - mn[1]) / GRID_RES_M).astype(int)
-    grid[rows, cols] = 255
-    return grid, mn
-
-
-def _largest_region(grid: np.ndarray) -> np.ndarray:
-    k = np.ones((CLOSE_KERNEL_CELLS, CLOSE_KERNEL_CELLS), np.uint8)
-    closed = cv2.morphologyEx(grid, cv2.MORPH_CLOSE, k)
-    h, w = closed.shape
-    ff = closed.copy()
-    mask = np.zeros((h + 2, w + 2), np.uint8)
-    cv2.floodFill(ff, mask, (0, 0), 255)
-    filled = closed | cv2.bitwise_not(ff)
-    n, labels, stats, _ = cv2.connectedComponentsWithStats(filled, connectivity=8)
-    if n <= 1:
-        return filled
-    biggest = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-    return np.where(labels == biggest, 255, 0).astype(np.uint8)
 
 
 def _rectilinear_polygon(mask: np.ndarray, origin: np.ndarray) -> np.ndarray:
