@@ -58,11 +58,13 @@ This build implements and verifies the **LiDAR tier** only:
 reliable ceiling height (±1.4 cm), floor area, extents, and orientation, each
 with a calibrated confidence interval, plus a rendered plan and JSON output.
 
+Per-room segmentation isolates the dominant enclosed room (breaking narrow
+doorway necks), with an honest fallback to the full footprint when no single
+compact room dominates.
+
 Not implemented (described as planned work in the technical report): photo and
-video tiers, multi-room stitching, per-room segmentation, openings detection,
-damage detection, and drift correction. The room outline is currently the
-scanned footprint envelope, which can include regions seen through open
-doorways.
+video tiers, full multi-room stitching, openings detection, damage detection,
+and drift correction.
 
 ## Reproduce a result
 

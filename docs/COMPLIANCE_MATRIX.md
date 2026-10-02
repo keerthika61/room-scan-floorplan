@@ -9,7 +9,7 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 | 3 | LiDAR tier pipeline | `pipeline/`, `run.py` | Runs end-to-end | ✅ |
 | 4 | Video tier | — | — | ❌ (described in report §7) |
 | 5 | Photo tier + whole-property stitch | — | — | ❌ (described in report §7) |
-| 6 | Per-room dimensioned plan (walls, area, outline) | `pipeline/room_outline.py`, `pipeline/render.py` | `floor_plan.png` | ◻ (outline is scan envelope, not per-room) |
+| 6 | Per-room dimensioned plan (walls, area, outline) | `pipeline/room_outline.py`, `pipeline/room_segment.py`, `pipeline/render.py` | `floor_plan.png` | ◻ (dominant room isolated via doorway-break segmentation; multi-room split still future work) |
 | 7 | Ceiling height | `pipeline/planes.py` | `result.json → room.ceiling_height` | ✅ (±1.4 cm) |
 | 8 | Stitched multi-room plan with adjacency | — | — | ❌ (single capture only) |
 | 9 | Per-surface damage regions + class + extent | — | — | ❌ (not in scope of this build) |
@@ -32,8 +32,9 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 ## Summary
 
 This build delivers a **reproducible, honestly-calibrated LiDAR-tier
-pipeline** with a complete fix loop and clean process evidence. It does **not**
-implement the photo/video tiers, multi-room stitching, damage detection, or
-drift correction. Those are described as planned work in the technical report
-rather than claimed as working — in line with the brief's emphasis on honest
-calibration over confident overreach.
+pipeline** with per-room segmentation (dominant enclosed room), a complete fix
+loop, and clean process evidence. It does **not** implement the photo/video
+tiers, full multi-room stitching, damage detection, or drift correction. Those
+are described as planned work in the technical report rather than claimed as
+working — in line with the brief's emphasis on honest calibration over
+confident overreach.

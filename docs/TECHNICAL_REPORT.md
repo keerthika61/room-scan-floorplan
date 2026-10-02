@@ -19,7 +19,8 @@ scan folder
   -> scan_reader     parse poses, intrinsics (scaled to depth res), depth/conf
   -> pointcloud      back-project depth, place by pose, fuse, filter, downsample
   -> planes          floor + ceiling via robust plane fit -> ceiling height
-  -> room_outline    orientation estimate -> floor occupancy -> rectilinear poly
+  -> room_segment    isolate the dominant enclosed room (break doorway necks)
+  -> room_outline    orientation estimate -> rectilinear poly on the room mask
   -> render          top-down floor plan PNG
   -> result_schema   JSON with value + CI + method for every measurement
 ```
@@ -94,13 +95,26 @@ A full measure → diagnose → fix → re-measure cycle, documented in
 - **After:** CI **±1.41 cm** → PASS, with the height value moving only
   **2.6 mm** — the uncertainty was corrected, not the answer.
 
+## 5b. Per-room segmentation
+
+`room_segment.py` isolates the dominant enclosed room before the outline is
+traced. The filled floor mask is **morphologically opened** with a
+doorway-sized kernel (~0.55 m radius): eroding by a little over half a doorway
+width snaps the narrow necks that connect the room to spaces seen through open
+doors, the largest surviving blob is kept as the room core, and it is dilated
+back and clipped to the original coverage. When no single compact region
+dominates (its area is < 35 % of the full coverage — e.g. a corridor-heavy
+capture), the pipeline **falls back to the full footprint** and records this in
+`result.json → room.segmentation_mode`. On the two multi-area sample scans this
+drops ~30 % of through-doorway area; on the corridor-like scan it honestly
+falls back rather than over-cropping.
+
 ## 6. Known failure modes
 
-- **Through-doorway regions.** The outline currently traces the full scanned
-  footprint, which can include adjacent spaces seen through open doors. All
-  three sample scans are large multi-area spaces, so the reported outline is
-  an envelope, not a per-room boundary. This is the largest known limitation
-  and is flagged in `result.json → known_limitations`.
+- **Non-compact captures.** When a scan is mostly corridor with no dominant
+  room, segmentation cannot isolate a single room and the pipeline reports the
+  full footprint (flagged via `segmentation_mode`). The rounded corners left by
+  the morphological kernel are cosmetic, not metric.
 - **Mirrors / glass.** Mirrors create phantom depth *behind* the glass (the
   reflected room), and clear glass returns little or no depth. The current
   filtering (confidence + range clamp + outlier removal) suppresses some of
@@ -113,9 +127,9 @@ A full measure → diagnose → fix → re-measure cycle, documented in
 
 ## 7. What I would do next (planned, not claimed)
 
-1. **Per-room segmentation**: cut the fused cloud at detected doorway gaps and
-   wall-enclosed regions, then outline each room separately — removes the
-   through-doorway envelope problem.
+1. **Multi-room split**: extend the dominant-room segmentation to label and
+   outline *every* room separately (not just the dominant one), then stitch
+   them into a whole-property plan with adjacency.
 2. **Drift correction**: pose-graph optimization with plane-anchored loop
    closure, plus an on/off ablation on the multi-room footprint.
 3. **Openings**: detect doors/windows as gaps in the wall-height density and
