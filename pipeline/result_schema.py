@@ -43,7 +43,7 @@ def build_result(scan_name: str, height, outline, n_points: int) -> dict[str, An
         height.ceiling_height_m,
         height.ceiling_height_ci_m,
         "m",
-        "vertical_histogram_slabs",
+        "robust_plane_fit_standard_error",
         note=height.note,
     )
 
@@ -55,7 +55,7 @@ def build_result(scan_name: str, height, outline, n_points: int) -> dict[str, An
         "room": {
             "floor_area": _measure(
                 outline.floor_area_m2, outline.floor_area_ci_m2, "m^2",
-                "floor_occupancy_polygon",
+                "segmented_room_polygon",
             ),
             "ceiling_height": ceiling,
             "wall_count": len(walls),
