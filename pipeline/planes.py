@@ -34,7 +34,11 @@ MIN_SLAB_POINTS = 8000
 # Half-thickness (m) of the band we count around a candidate height.
 SLAB_HALF_BAND_M = 0.05
 # A ceiling must be at least this far above the floor to be believable.
-MIN_ROOM_HEIGHT_M = 1.8
+# Real rooms are rarely under ~2.2 m; a strong horizontal surface at 1.8-2.1 m
+# is almost always a shelf, counter, or mezzanine edge, not a ceiling. Using
+# 2.2 m avoids calling such surfaces a ceiling (a real false positive we hit
+# on the floor-only scan, which reported a bogus 1.81 m "ceiling").
+MIN_ROOM_HEIGHT_M = 2.2
 MAX_ROOM_HEIGHT_M = 4.5
 
 
