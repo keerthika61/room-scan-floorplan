@@ -1,0 +1,20 @@
+# Data (large) — fetched/placed separately, not committed
+sample_data/
+*.zip
+drive-download-*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Outputs
+outputs/
+*.ply
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
