@@ -29,6 +29,8 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
+from .room_segment import dominant_room_mask
+
 GRID_RES_M = 0.02
 WALL_BAND_LOW_M = 0.3      # wall slice: this far above floor ...
 WALL_BAND_HIGH_M = 1.5     # ... up to here (avoid floor + ceiling clutter)
@@ -50,6 +52,7 @@ class RoomOutline:
     grid_origin_xz: np.ndarray      # world-ish origin in rotated frame
     rotation: np.ndarray            # 2x2 rot applied (rotated = R @ world_xz)
     grid_res_m: float
+    segmentation_mode: str = "dominant_room"  # or "full_footprint_fallback"
 
 
 def estimate_orientation(points: np.ndarray, floor_y: float) -> float:
@@ -156,14 +159,16 @@ def compute_room_outline(points: np.ndarray, floor_y: float) -> RoomOutline:
     theta = estimate_orientation(points, floor_y)
     R = _rotation_matrix(-theta)  # rotate world so walls align to axes
 
-    band = (points[:, 1] >= floor_y - 0.05) & (points[:, 1] <= floor_y + FOOTPRINT_BAND_M)
-    xz = points[band][:, [0, 2]]
-    if xz.shape[0] < 100:
-        xz = points[:, [0, 2]]
-    xz_rot = xz @ R.T
+    # Build a copy of the cloud rotated into the Manhattan frame (X,Z rotated,
+    # Y/height untouched), so segmentation and the outline are axis-aligned.
+    pts_rot = points.copy()
+    pts_rot[:, [0, 2]] = points[:, [0, 2]] @ R.T
 
-    grid, origin = _rasterize(xz_rot)
-    room = _largest_region(grid)
+    # Per-room segmentation: isolate the dominant enclosed room, dropping
+    # regions seen through doorways. Falls back to the full footprint when no
+    # single compact room dominates (and records which happened).
+    room, origin, _, seg_info = dominant_room_mask(pts_rot, floor_y,
+                                                   footprint_band_m=FOOTPRINT_BAND_M)
     poly_rot = _rectilinear_polygon(room, origin)
 
     # Rotate polygon back to the original world frame.
@@ -188,6 +193,7 @@ def compute_room_outline(points: np.ndarray, floor_y: float) -> RoomOutline:
         grid_origin_xz=origin,
         rotation=R,
         grid_res_m=GRID_RES_M,
+        segmentation_mode=seg_info["mode"],
     )
 
 
