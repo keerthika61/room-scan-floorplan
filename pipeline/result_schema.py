@@ -66,6 +66,7 @@ def build_result(scan_name: str, height, outline, n_points: int) -> dict[str, An
                 "sum_of_wall_lengths",
             ),
             "orientation_deg": round(float(outline.orientation_deg), 2),
+            "segmentation_mode": outline.segmentation_mode,
             "walls": walls,
             "outline_polygon_xz": [
                 [round(float(x), 4), round(float(z), 4)]
@@ -73,8 +74,9 @@ def build_result(scan_name: str, height, outline, n_points: int) -> dict[str, An
             ],
         },
         "known_limitations": [
-            "Outline may include regions seen through open doorways; "
-            "per-room segmentation is not yet applied.",
+            "Per-room segmentation isolates the dominant enclosed room by "
+            "breaking narrow doorway necks; captures with no single compact "
+            "room fall back to the full footprint (see segmentation_mode).",
             "Openings (doors/windows) detection not yet implemented at this tier.",
         ],
     }
