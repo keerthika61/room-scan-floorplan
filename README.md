@@ -45,6 +45,28 @@ python run.py sample_data/single_room/c00a170fe1
 
 Outputs are written to `outputs/<scan_name>/`.
 
-## Status
+## Documents
 
-See `TASKS.md` / git history for progress. This is being built incrementally.
+- `docs/TECHNICAL_REPORT.md` — architecture, error budget, calibration, drift status, failure modes, next steps.
+- `docs/COMPLIANCE_MATRIX.md` — requirement → file → artifact → status (honest).
+- `docs/CAPTURE_PROTOCOL.md` — Route 2 stock-app capture protocol + device matrix.
+- `fixloop/FIX_LOOP.md` — the measure → diagnose → fix → re-measure cycle (FAIL→PASS), with regenerable before/after.
+
+## Scope (honest)
+
+This build implements and verifies the **LiDAR tier** only:
+reliable ceiling height (±1.4 cm), floor area, extents, and orientation, each
+with a calibrated confidence interval, plus a rendered plan and JSON output.
+
+Not implemented (described as planned work in the technical report): photo and
+video tiers, multi-room stitching, per-room segmentation, openings detection,
+damage detection, and drift correction. The room outline is currently the
+scanned footprint envelope, which can include regions seen through open
+doorways.
+
+## Reproduce a result
+
+```bash
+python run.py sample_data/single_scan_with_ceiling/c7d28f72c6
+python -m fixloop.measure_ceiling outputs/c7d28f72c6/cloud.ply   # fix-loop number
+```
