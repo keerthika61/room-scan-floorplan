@@ -60,11 +60,19 @@ with a calibrated confidence interval, plus a rendered plan and JSON output.
 
 Per-room segmentation isolates the dominant enclosed room (breaking narrow
 doorway necks), with an honest fallback to the full footprint when no single
-compact room dominates.
+compact room dominates. Doors/windows are detected as gaps in wall-height
+density and reported with widths + confidence intervals.
 
 Not implemented (described as planned work in the technical report): photo and
-video tiers, full multi-room stitching, openings detection, damage detection,
-and drift correction.
+video tiers, full multi-room stitching, damage detection, and drift
+correction.
+
+## Tests and benchmark
+
+```bash
+python -m unittest discover tests          # fast smoke tests
+python -m fixloop.benchmark_summary        # regenerate docs/BENCHMARK.md
+```
 
 ## Reproduce a result
 

@@ -21,6 +21,7 @@ scan folder
   -> planes          floor + ceiling via robust plane fit -> ceiling height
   -> room_segment    isolate the dominant enclosed room (break doorway necks)
   -> room_outline    orientation estimate -> rectilinear poly on the room mask
+  -> openings        door/window widths from gaps in wall-height density
   -> render          top-down floor plan PNG
   -> result_schema   JSON with value + CI + method for every measurement
 ```
@@ -115,6 +116,14 @@ falls back rather than over-cropping.
   room, segmentation cannot isolate a single room and the pipeline reports the
   full footprint (flagged via `segmentation_mode`). The rounded corners left by
   the morphological kernel are cosmetic, not metric.
+- **Ceiling false positives (guarded).** A strong horizontal surface at
+  1.8-2.1 m (a shelf or counter) can look like a ceiling. The floor-only scan
+  originally reported a bogus 1.81 m "ceiling"; a 2.2 m minimum room-height
+  guard now rejects it, so that scan correctly reports no ceiling. Verified in
+  `docs/BENCHMARK.md`.
+- **Openings on jagged outlines.** Openings are found as wall-sized gaps in
+  wall-height density; when the outline is very jagged the gap-detection is
+  conservative and can miss real doors (it prefers a miss to a phantom).
 - **Mirrors / glass.** Mirrors create phantom depth *behind* the glass (the
   reflected room), and clear glass returns little or no depth. The current
   filtering (confidence + range clamp + outlier removal) suppresses some of
@@ -132,8 +141,9 @@ falls back rather than over-cropping.
    them into a whole-property plan with adjacency.
 2. **Drift correction**: pose-graph optimization with plane-anchored loop
    closure, plus an on/off ablation on the multi-room footprint.
-3. **Openings**: detect doors/windows as gaps in the wall-height density and
-   measure their widths with CIs.
+3. **Openings on jagged outlines**: openings are already detected as
+   wall-density gaps (`openings.py`); extend this to be robust when the outline
+   is very jagged (currently it can miss openings there).
 4. **Photo/video tiers**: learned monocular depth + multi-view scale for the
    photo tier; monocular SLAM for video — with honestly wider intervals.
 

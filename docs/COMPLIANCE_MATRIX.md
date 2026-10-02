@@ -19,7 +19,9 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 | 13 | One command per capture | `run.py` | `python run.py <scan>` | ✅ |
 | 14 | JSON to a published schema | `pipeline/result_schema.py` | `result.json` (schema v1.0) | ✅ |
 | 15 | Rendered plan | `pipeline/render.py` | `floor_plan.png` | ✅ |
-| 16 | Opening widths (doors/windows) | — | — | ❌ (report §7) |
+| 15b | Benchmark summary across scans | `fixloop/benchmark_summary.py` | `docs/BENCHMARK.md` | ✅ |
+| 15c | Smoke tests | `tests/test_pipeline.py` | `python -m unittest discover tests` | ✅ |
+| 16 | Opening widths (doors/windows) | `pipeline/openings.py` | `result.json → room.openings`, markers on `floor_plan.png` | ◻ (detected as wall-density gaps with width CIs; conservative, can miss on jagged outlines) |
 | 17 | Repeatability gate | — | — | ❌ (no repeat-capture pair available in sample data) |
 | 18 | Drift accountability + ablation | `docs/TECHNICAL_REPORT.md §4` | Honest "poses as-is" statement | ◻ (stated, not corrected) |
 | 19 | Head-to-head vs consumer app | — | — | ❌ (needs own capture + app export) |
