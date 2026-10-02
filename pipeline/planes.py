@@ -24,9 +24,13 @@ from dataclasses import dataclass
 
 import numpy as np
 
-# A horizontal slab is "found" only if at least this fraction of all points
-# fall within the slab band. Keeps us from calling a tabletop a ceiling.
-MIN_SLAB_FRACTION = 0.03
+# A horizontal slab counts as a ceiling if it holds at least this fraction of
+# all points OR this many absolute points. People scan ceilings far less than
+# floors, so a partially-captured ceiling can be a small fraction yet still be
+# a real, large horizontal surface. Using an absolute floor on the count makes
+# detection stable across different frame-sampling densities.
+MIN_SLAB_FRACTION = 0.01
+MIN_SLAB_POINTS = 8000
 # Half-thickness (m) of the band we count around a candidate height.
 SLAB_HALF_BAND_M = 0.05
 # A ceiling must be at least this far above the floor to be believable.
@@ -40,7 +44,14 @@ class Slab:
 
     height: float          # Y value of the slab (meters)
     point_count: int       # how many points fell in its band
-    spread: float          # std of point Y within the band (meters) -> uncertainty
+    spread: float          # std of point Y within the band (meters)
+    height_se: float = 0.0  # standard error of the slab height (meters)
+
+
+# Sensor systematic floor on any single-plane height estimate (meters).
+# iPhone LiDAR depth has a small bias that no amount of averaging removes, so
+# the CI should never claim to be tighter than this.
+PLANE_SYSTEMATIC_M = 0.005
 
 
 @dataclass
@@ -63,12 +74,47 @@ def _histogram_peaks(y: np.ndarray, bin_size: float = 0.01):
 
 
 def _slab_at(y: np.ndarray, height: float) -> Slab:
-    """Measure the slab (count + spread) in a band around a given height."""
+    """Fit a horizontal plane to the slab and report height + its std error.
+
+    Previously this returned the raw std of all band points as the
+    "uncertainty". That conflates the slab's physical thickness/roughness with
+    the uncertainty in WHERE the plane sits, which inflates the CI.
+
+    The quantity we actually want is how well we know the plane's height. For
+    the mean of N measurements that is the standard error = std / sqrt(N),
+    estimated after a robust trim so a few stray points (light fixtures,
+    vents, people) don't drag the plane. We still keep `spread` for context.
+    """
     band = np.abs(y - height) <= SLAB_HALF_BAND_M
     pts = y[band]
-    spread = float(pts.std()) if pts.size > 1 else SLAB_HALF_BAND_M
-    return Slab(height=float(np.median(pts)) if pts.size else height,
-                point_count=int(pts.size), spread=spread)
+    if pts.size < 2:
+        return Slab(height=height, point_count=int(pts.size),
+                    spread=SLAB_HALF_BAND_M, height_se=SLAB_HALF_BAND_M)
+
+    # Iterative robust trim: re-center on the median, keep points within
+    # 2.5 sigma, repeat a couple of times. This fits the dominant plane and
+    # discards outliers that would otherwise bias both height and spread.
+    keep = pts
+    center = float(np.median(keep))
+    for _ in range(3):
+        s = keep.std()
+        if s == 0:
+            break
+        m = np.abs(keep - center) <= 2.5 * s
+        if m.sum() < 10 or m.all():
+            keep = keep[m]
+            center = float(keep.mean())
+            break
+        keep = keep[m]
+        center = float(keep.mean())
+
+    spread = float(keep.std()) if keep.size > 1 else 0.0
+    # Standard error of the plane height, floored by the sensor systematic so
+    # we never over-claim precision just because N is huge.
+    se = spread / np.sqrt(max(keep.size, 1))
+    se = float(np.sqrt(se**2 + PLANE_SYSTEMATIC_M**2))
+    return Slab(height=center, point_count=int(keep.size),
+                spread=spread, height_se=se)
 
 
 def find_floor_ceiling(points: np.ndarray) -> HeightResult:
@@ -104,13 +150,15 @@ def find_floor_ceiling(points: np.ndarray) -> HeightResult:
         cand_centers = centers[ceil_mask]
         best = cand_centers[np.argmax(cand_counts)]
         slab = _slab_at(y, best)
-        if slab.point_count >= MIN_SLAB_FRACTION * total:
+        if slab.point_count >= min(MIN_SLAB_FRACTION * total, MIN_SLAB_POINTS):
             ceiling = slab
             ceiling_height = ceiling.height - floor.height
-            # Combine the two slabs' spreads in quadrature as the height
-            # uncertainty, then widen slightly for discretisation.
-            ceiling_ci = float(np.sqrt(floor.spread**2 + ceiling.spread**2) + 0.005)
-            note = "ceiling found"
+            # Ceiling height is a difference of two independent plane heights,
+            # so its uncertainty is the quadrature sum of their standard
+            # errors. Reported as a ~2-sigma (95%) half-width.
+            combined_se = np.sqrt(floor.height_se**2 + ceiling.height_se**2)
+            ceiling_ci = float(2.0 * combined_se)
+            note = "ceiling found (least-squares plane fit)"
         else:
             note = "ceiling candidate too sparse; reporting floor only"
     else:
