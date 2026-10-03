@@ -51,6 +51,9 @@ Outputs are written to `outputs/<scan_name>/`.
 - `docs/COMPLIANCE_MATRIX.md` — requirement → file → artifact → status (honest).
 - `docs/CAPTURE_PROTOCOL.md` — Route 2 stock-app capture protocol + device matrix.
 - `fixloop/FIX_LOOP.md` — the measure → diagnose → fix → re-measure cycle (FAIL→PASS), with regenerable before/after.
+- `docs/REPEATABILITY.md` — repeatability proxy (perimeter repeats to 0.04%).
+- `docs/BENCHMARK.md` — measurements across all three scans.
+- `docs/SUBMISSION_CHECKLIST.md` — what to run and where each deliverable lives.
 
 ## Scope (honest)
 

@@ -22,7 +22,7 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 | 15b | Benchmark summary across scans | `fixloop/benchmark_summary.py` | `docs/BENCHMARK.md` | ✅ |
 | 15c | Smoke tests | `tests/test_pipeline.py` | `python -m unittest discover tests` | ✅ |
 | 16 | Opening widths (doors/windows) | `pipeline/openings.py` | `result.json → room.openings`, markers on `floor_plan.png` | ◻ (detected as wall-density gaps with width CIs; conservative, can miss on jagged outlines) |
-| 17 | Repeatability gate | — | — | ❌ (no repeat-capture pair available in sample data) |
+| 17 | Repeatability gate | `fixloop/repeatability.py`, `docs/REPEATABILITY.md` | Frame-split proxy: perimeter repeats to 0.04% | ◻ (proxy, not two physical captures; honestly flagged) |
 | 18 | Drift accountability + ablation | `docs/TECHNICAL_REPORT.md §4` | Honest "poses as-is" statement | ◻ (stated, not corrected) |
 | 19 | Head-to-head vs consumer app | — | — | ❌ (needs own capture + app export) |
 | 20 | Fix loop (worst gate → fix → before/after) | `fixloop/FIX_LOOP.md`, `fixloop/before.txt`, `fixloop/after.txt` | FAIL→PASS, regenerable | ✅ |

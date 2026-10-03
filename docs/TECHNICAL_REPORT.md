@@ -96,6 +96,15 @@ A full measure → diagnose → fix → re-measure cycle, documented in
 - **After:** CI **±1.41 cm** → PASS, with the height value moving only
   **2.6 mm** — the uncertainty was corrected, not the answer.
 
+## 5a. Repeatability
+
+Tested with a frame-split proxy (`fixloop/repeatability.py`): one scan's
+frames are split into two disjoint halves and geometry is built from each
+independently. On `single_room` the perimeter repeats to **0.04 %** (1.39 cm),
+inside the brief's 0.5 % gate; floor area differs ~2.2 % because it is more
+sensitive to the segmentation boundary. This is a proxy for sampling stability,
+not two physical captures — stated plainly in `docs/REPEATABILITY.md`.
+
 ## 5b. Per-room segmentation
 
 `room_segment.py` isolates the dominant enclosed room before the outline is
