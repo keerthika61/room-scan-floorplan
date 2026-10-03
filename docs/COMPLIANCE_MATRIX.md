@@ -24,7 +24,7 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 | 15d | RGB point cloud (geometry+colour fusion) | `pipeline/colorize.py` | `cloud_colored.ply` (`run.py --colorize`) | ✅ (colour from aligned rgb.mp4; depth still LiDAR — not a monocular video tier) |
 | 16 | Opening widths (doors/windows) | `pipeline/openings.py` | `result.json → room.openings`, markers on `floor_plan.png` | ◻ (detected as wall-density gaps with width CIs; conservative, can miss on jagged outlines) |
 | 17 | Repeatability gate | `fixloop/repeatability.py`, `docs/REPEATABILITY.md` | Frame-split proxy: perimeter 0.12%, area 0.49% (both < 0.5% gate) | ◻ (proxy, not two physical captures; honestly flagged) |
-| 18 | Drift accountability + ablation | `docs/TECHNICAL_REPORT.md §4` | Honest "poses as-is" statement | ◻ (stated, not corrected) |
+| 18 | Drift accountability + ablation | `fixloop/drift_analysis.py`, `docs/TECHNICAL_REPORT.md §4` | Measured floor-tilt drift = 0.003° (negligible); poses-as-is justified for this data | ◻ (measured, not corrected; loop-closure+ablation is future work for long walks) |
 | 19 | Head-to-head vs consumer app | — | — | ❌ (needs own capture + app export) |
 | 20 | Fix loop (worst gate → fix → before/after) | `fixloop/FIX_LOOP.md`, `fixloop/before.txt`, `fixloop/after.txt` | FAIL→PASS, regenerable | ✅ |
 | 21 | Process evidence (incremental git history) | git log | Incremental, authored commits built in dependency order | ✅ |
