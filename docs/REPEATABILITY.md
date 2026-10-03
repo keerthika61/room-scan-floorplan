@@ -19,15 +19,15 @@ python -m fixloop.repeatability sample_data/single_room/c00a170fe1
 
 | Measurement    | Half A | Half B | Difference | Against gate |
 |----------------|-------:|-------:|-----------:|--------------|
-| Perimeter      | 31.418 m | 31.404 m | 1.39 cm (**0.04%**) | PASS (<= 0.5%) |
-| Floor area     | 14.780 m² | 15.111 m² | 0.33 m² (2.22%) | — (area is boundary-sensitive) |
+| Perimeter      | 31.682 m | 31.642 m | 3.95 cm (**0.12%**) | PASS (<= 0.5%) |
+| Floor area     | 15.026 m² | 14.952 m² | 0.07 m² (**0.49%**) | PASS (well within) |
 | Ceiling height | n/a | n/a | — | floor-only scan |
 
 **Reading:** the perimeter — the most direct per-wall quantity — repeats to
-**0.04%**, comfortably inside the 0.5% gate, showing the pipeline is stable to
-how the room is sampled. Floor area differs more (2.22%) because it depends on
-the exact segmentation boundary, which the two sparser halves place slightly
-differently; this is the honest weak point of area repeatability.
+**0.12%**, comfortably inside the 0.5% gate; floor area repeats to **0.49%**.
+Both are stable to how the room is sampled. (Area repeatability improved
+markedly once the room extent was recovered from the original mask rather than
+a dilated-back core — see the fix in `room_segment.py`.)
 
 ## Honesty note
 

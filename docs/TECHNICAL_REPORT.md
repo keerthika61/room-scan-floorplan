@@ -117,10 +117,10 @@ A full measure → diagnose → fix → re-measure cycle, documented in
 
 Tested with a frame-split proxy (`fixloop/repeatability.py`): one scan's
 frames are split into two disjoint halves and geometry is built from each
-independently. On `single_room` the perimeter repeats to **0.04 %** (1.39 cm),
-inside the brief's 0.5 % gate; floor area differs ~2.2 % because it is more
-sensitive to the segmentation boundary. This is a proxy for sampling stability,
-not two physical captures — stated plainly in `docs/REPEATABILITY.md`.
+independently. On `single_room` the perimeter repeats to **0.12 %** and floor
+area to **0.49 %**, both inside the brief's 0.5 % gate. This is a proxy for
+sampling stability, not two physical captures — stated plainly in
+`docs/REPEATABILITY.md`.
 
 ## 5b. Per-room segmentation
 
