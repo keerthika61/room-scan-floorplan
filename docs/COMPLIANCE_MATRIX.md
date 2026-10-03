@@ -26,9 +26,9 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 | 18 | Drift accountability + ablation | `docs/TECHNICAL_REPORT.md §4` | Honest "poses as-is" statement | ◻ (stated, not corrected) |
 | 19 | Head-to-head vs consumer app | — | — | ❌ (needs own capture + app export) |
 | 20 | Fix loop (worst gate → fix → before/after) | `fixloop/FIX_LOOP.md`, `fixloop/before.txt`, `fixloop/after.txt` | FAIL→PASS, regenerable | ✅ |
-| 21 | Process evidence (incremental git history) | git log | ~9 incremental commits, authored | ✅ |
+| 21 | Process evidence (incremental git history) | git log | Incremental, authored commits built in dependency order | ✅ |
 | 22 | Reproduction (regenerate numbers from raw) | `run.py`, `requirements.txt`, `README.md` | Deterministic re-run | ✅ |
-| 23 | Technical report | `docs/TECHNICAL_REPORT.md` | 8 sections | ✅ |
+| 23 | Technical report | `docs/TECHNICAL_REPORT.md` | Architecture, error budget, calibration, drift, fix loop, repeatability, segmentation, failure modes, next steps | ✅ |
 | 24 | Known failure modes (mirror/glass/wet/low light) | `docs/TECHNICAL_REPORT.md §6` | Section | ✅ |
 
 ## Summary
