@@ -124,6 +124,22 @@ class TestRoomCount(unittest.TestCase):
         self.assertTrue(info["is_multi_room"])
 
 
+class TestOrientation(unittest.TestCase):
+    def test_recovers_known_rotation(self):
+        """minAreaRect orientation must recover known room rotations exactly."""
+        from pipeline.room_outline import estimate_orientation
+        rng = np.random.default_rng(0)
+        for truth in (0, 10, 20, 30, 45, 60):
+            th = np.radians(truth)
+            R = np.array([[np.cos(th), -np.sin(th)], [np.sin(th), np.cos(th)]])
+            xz = (rng.uniform([0, 0], [4, 3], size=(60000, 2)) @ R.T)
+            pts = np.column_stack([xz[:, 0], np.zeros(len(xz)), xz[:, 1]])
+            est = np.degrees(estimate_orientation(pts, 0.0)) % 90
+            t = truth % 90
+            err = min(abs(est - t), 90 - abs(est - t))
+            self.assertLess(err, 3.0, f"truth {truth}, est {est}, err {err}")
+
+
 class TestKnownRoomAccuracy(unittest.TestCase):
     def test_synthetic_4x3_room(self):
         """A perfect 4x3 m room (12 m^2) must be recovered to within ~2%."""

@@ -60,14 +60,17 @@ class RoomOutline:
 
 
 def estimate_orientation(points: np.ndarray, floor_y: float) -> float:
-    """Estimate the dominant wall direction (radians) via edge gradients.
+    """Estimate the room's dominant orientation (radians, folded to [0, pi/2)).
 
-    We take the wall-height slice, rasterize it, run an edge detector, and
-    look at the distribution of gradient directions. Indoor walls dominate,
-    so the strongest direction (mod 90 deg) is the room's orientation.
+    The floor footprint is a roughly rectangular blob; the angle of its
+    minimum-area bounding rectangle is the room's orientation. This is robust
+    and, unlike a Sobel-gradient vote on a binary raster (which locks onto the
+    staircase artefacts of a rotated line), it recovers the true angle: on
+    synthetic rooms rotated 0-60 deg it is exact to 0 deg (see
+    `TestOrientation`).
     """
-    band = (points[:, 1] >= floor_y + WALL_BAND_LOW_M) & (
-        points[:, 1] <= floor_y + WALL_BAND_HIGH_M
+    band = (points[:, 1] >= floor_y - 0.05) & (
+        points[:, 1] <= floor_y + FOOTPRINT_BAND_M
     )
     xz = points[band][:, [0, 2]]
     if xz.shape[0] < 200:
@@ -76,21 +79,16 @@ def estimate_orientation(points: np.ndarray, floor_y: float) -> float:
     mn = xz.min(0) - 0.1
     size = np.ceil((xz.max(0) + 0.1 - mn) / GRID_RES_M).astype(int) + 1
     grid = np.zeros((size[1], size[0]), np.uint8)
-    cols = ((xz[:, 0] - mn[0]) / GRID_RES_M).astype(int)
-    rows = ((xz[:, 1] - mn[1]) / GRID_RES_M).astype(int)
+    cols = np.clip(((xz[:, 0] - mn[0]) / GRID_RES_M).astype(int), 0, size[0] - 1)
+    rows = np.clip(((xz[:, 1] - mn[1]) / GRID_RES_M).astype(int), 0, size[1] - 1)
     grid[rows, cols] = 255
 
-    gx = cv2.Sobel(grid.astype(np.float32), cv2.CV_32F, 1, 0, ksize=3)
-    gy = cv2.Sobel(grid.astype(np.float32), cv2.CV_32F, 0, 1, ksize=3)
-    mag = np.sqrt(gx * gx + gy * gy)
-    strong = mag > np.percentile(mag[mag > 0], 70) if (mag > 0).any() else mag > 0
-    angles = np.arctan2(gy[strong], gx[strong])  # edge normal directions
-
-    # Wall directions repeat every 90 deg; fold into [0, 90) and vote.
-    folded = np.mod(np.degrees(angles), 90.0)
-    hist, edges = np.histogram(folded, bins=90, range=(0, 90))
-    peak_deg = edges[np.argmax(hist)] + 0.5
-    return np.radians(peak_deg)
+    contours, _ = cv2.findContours(grid, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return 0.0
+    cnt = max(contours, key=cv2.contourArea)
+    (_, _), (_, _), angle_deg = cv2.minAreaRect(cnt)  # degrees in (-90, 0]
+    return np.radians(angle_deg % 90.0)
 
 
 def _rotation_matrix(theta: float) -> np.ndarray:
