@@ -1,5 +1,4 @@
 numpy>=1.26
-scipy>=1.11
 open3d>=0.18
 opencv-python>=4.8
 Pillow>=10.0
