@@ -5,17 +5,21 @@ Find the floor and (if present) the ceiling, and compute ceiling height.
 
 Because the data is gravity-aligned (Y is up), the floor and ceiling are
 horizontal slabs: large groups of points sharing nearly the same Y value.
-So instead of a heavy plane-fitting routine, we build a fine histogram of
-the Y coordinate and look for the dominant peaks:
+Detection is a two-stage process:
 
-  - The FLOOR is the strong low peak (most points: people scan floors a lot).
-  - The CEILING, when the room was scanned looking up, is a strong high peak
-    well above the floor.
+  1. LOCATE: build a fine 1-D histogram of the Y coordinate and pick the
+     dominant peaks. The FLOOR is the strong peak low in the height range
+     (people scan floors a lot); the CEILING, when captured, is a strong peak
+     a believable room height above it.
 
-Working in 1-D along the known vertical axis is fast, robust to furniture
-clutter (chairs add points but don't form a floor-sized horizontal slab),
-and gives a natural way to express uncertainty: the spread of the slab's
-points around its peak.
+  2. FIT: around each located peak, fit the slab height by a robust
+     least-squares mean (iterative 2.5-sigma trim to reject fixtures/vents).
+     The height's uncertainty is the standard error of that mean
+     (std / sqrt(N)), floored by a sensor systematic -- NOT the raw point
+     scatter (using the scatter was the bug the fix loop corrected).
+
+Working along the known vertical axis is fast and robust to furniture clutter
+(chairs add points but don't form a floor-sized horizontal slab).
 """
 
 from __future__ import annotations

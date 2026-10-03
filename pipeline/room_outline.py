@@ -1,27 +1,25 @@
 """
 room_outline.py
 ---------------
-Recover a CLEAN room outline (straight walls) from the point cloud.
+Recover the room outline polygon, wall (edge) lengths and floor area from the
+point cloud, in three steps:
 
-The first-pass footprint traced raw floor coverage and produced a jagged
-50+ vertex blob. This module fixes that in three steps:
-
-  1. Orientation: indoor walls are mostly parallel/perpendicular to each
-     other ("Manhattan"). We estimate the room's dominant wall angle from
-     the wall points and rotate the cloud so walls line up with the X/Z
-     axes. This lets us snap to clean right angles later.
+  1. Orientation: estimate the room's dominant angle from the minimum-area
+     bounding rectangle of the floor footprint (`cv2.minAreaRect`) and rotate
+     the X-Z plane by it, so the simplification below runs in a consistent,
+     axis-aligned frame. (Verified exact on synthetic rooms rotated 0-60 deg.)
 
   2. Segmentation: in the rotated frame `room_segment` isolates the dominant
-     enclosed room (breaking narrow doorway necks), or falls back to the full
-     footprint when no single compact room dominates.
+     room (breaking narrow doorway necks), or falls back to the full footprint
+     when no single compact room dominates.
 
-  3. Outline: we trace the contour of the room mask and simplify it
-     (Douglas-Peucker), then drop sub-threshold spurs. The result is a
-     simplified free-form polygon whose edges approximate the walls. We do
-     NOT force axis-alignment: the sample captures are large, organically
-     shaped spaces, so a rectilinear assumption would misrepresent them.
-     Orientation is still estimated and removed so the simplification works in
-     a consistent frame.
+  3. Outline: trace the contour of the room mask, simplify it
+     (Douglas-Peucker), and drop sub-threshold spurs. The result is a
+     simplified FREE-FORM polygon whose edges approximate the walls. We do NOT
+     force axis-alignment / right angles: the sample captures are large,
+     organically shaped spaces, so a rectilinear assumption would misrepresent
+     them. On a clean rectangular room the simplification does collapse to the
+     true walls (verified: a 4x3 m room recovers edges ~4,4,3,3).
 
 Everything is reported back in the ORIGINAL world frame so measurements and
 rendering stay consistent with the rest of the pipeline.
