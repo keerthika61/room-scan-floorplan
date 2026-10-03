@@ -74,7 +74,12 @@ def build_result(scan_name: str, height, outline, n_points: int,
                 "segmented_room_polygon",
             ),
             "ceiling_height": ceiling,
-            "wall_count": len(walls),
+            "outline_edge_count": len(walls),
+            "outline_note": (
+                "Edges are segments of a simplified free-form outline, not "
+                "architectural walls; a single physical wall may span several "
+                "edges on an irregular capture."
+            ),
             "perimeter": _measure(
                 sum(outline.wall_lengths_m),
                 sum(outline.wall_length_ci_m),
@@ -85,7 +90,7 @@ def build_result(scan_name: str, height, outline, n_points: int,
             "segmentation_mode": outline.segmentation_mode,
             "opening_count": len(openings_json),
             "openings": openings_json,
-            "walls": walls,
+            "outline_edges": walls,
             "outline_polygon_xz": [
                 [round(float(x), 4), round(float(z), 4)]
                 for x, z in outline.polygon_xz
@@ -96,7 +101,8 @@ def build_result(scan_name: str, height, outline, n_points: int,
             "breaking narrow doorway necks; captures with no single compact "
             "room fall back to the full footprint (see segmentation_mode).",
             "Openings are detected as door/window-sized gaps in wall-height "
-            "density; very jagged outlines can suppress detection on some "
-            "walls (conservative: prefers missing an opening to inventing one).",
+            "density. On jagged outlines detection is noisy: it can miss a real "
+            "door, and a gap between two short outline fragments can look like "
+            "an opening. Treat opening widths as indicative on such outlines.",
         ],
     }

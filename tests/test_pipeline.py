@@ -101,9 +101,9 @@ class TestResultSchema(unittest.TestCase):
             self.assertIn("ci_half_width", m)
             self.assertIn("unit", m)
             self.assertIn("method", m)
-        for w in room["walls"]:
+        for w in room["outline_edges"]:
             self.assertIn("ci_half_width", w["length"])
-        self.assertEqual(room["wall_count"], 4)
+        self.assertEqual(room["outline_edge_count"], 4)
 
 
 class TestRoomCount(unittest.TestCase):

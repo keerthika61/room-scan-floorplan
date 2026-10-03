@@ -30,7 +30,7 @@ def main():
             "mode": room["segmentation_mode"],
             "area": _fmt(room["floor_area"]),
             "ceiling": _fmt(room["ceiling_height"]),
-            "walls": room["wall_count"],
+            "walls": room.get("outline_edge_count", room.get("wall_count", "?")),
             "openings": room.get("opening_count", 0),
             "time_s": r.get("timing_seconds", "?"),
         })
@@ -38,7 +38,7 @@ def main():
     lines = ["# Benchmark Summary", "",
              "Auto-generated from `outputs/*/result.json` by "
              "`python -m fixloop.benchmark_summary`.", "",
-             "| Scan | Points | Mode | Floor area | Ceiling height | Walls | Openings | Time |",
+             "| Scan | Points | Mode | Floor area | Ceiling height | Outline edges | Openings | Time |",
              "|------|-------:|------|-----------|----------------|------:|---------:|-----:|"]
     for r in rows:
         lines.append(
