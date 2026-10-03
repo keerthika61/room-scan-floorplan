@@ -158,10 +158,11 @@ the synthetic multi-room test) are correctly split; this is reported via
 
 ## 6. Known failure modes
 
-- **Non-compact captures.** When a scan is mostly corridor with no dominant
-  room, segmentation cannot isolate a single room and the pipeline reports the
-  full footprint (flagged via `segmentation_mode`). The rounded corners left by
-  the morphological kernel are cosmetic, not metric.
+- **Non-compact captures.** If a scan fragments into many small blobs with no
+  dominant room (dominant component < 35 % of coverage), segmentation reports
+  the full footprint instead of carving it up, flagged via `segmentation_mode`.
+  This is rare on normal captures (the three samples are all 93-96 % dominant);
+  it is a safety net, not the common path.
 - **Ceiling false positives (guarded).** A strong horizontal surface at
   1.8-2.1 m (a shelf or counter) can look like a ceiling. The floor-only scan
   originally reported a bogus 1.81 m "ceiling"; a 2.2 m minimum room-height

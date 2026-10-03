@@ -58,8 +58,11 @@ def build_colored_point_cloud(
     pts_all: list[np.ndarray] = []
     col_all: list[np.ndarray] = []
 
-    pos = 0
     while True:
+        # Read the TRUE frame index from the decoder before each frame, so a
+        # mid-stream decode gap can never desync colour from pose (the video
+        # may have one fewer decodable frame than the odometry count).
+        pos = int(round(cap.get(cv2.CAP_PROP_POS_FRAMES)))
         ok, bgr = cap.read()
         if not ok:
             break
