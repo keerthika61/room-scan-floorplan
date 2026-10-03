@@ -164,6 +164,62 @@ def count_separable_rooms(points: np.ndarray, floor_y: float,
     }
 
 
+def label_all_rooms(points: np.ndarray, floor_y: float,
+                    footprint_band_m: float = 0.12):
+    """Return a per-room mask for EVERY room-sized region, plus the shared grid.
+
+    Generalises `dominant_room_mask` to multi-room captures: erode to break
+    doorway necks, then for each surviving room-sized core recover its full
+    extent from the un-eroded mask (same no-shrink trick as the single-room
+    path). Returns (list_of_room_masks, origin_xz, res_m). A single-room
+    capture yields one mask; a true multi-room capture yields several, which
+    is what a whole-property stitch would consume.
+    """
+    band = (points[:, 1] >= floor_y - 0.05) & (points[:, 1] <= floor_y + footprint_band_m)
+    xz = points[band][:, [0, 2]]
+    if xz.shape[0] < 100:
+        xz = points[:, [0, 2]]
+
+    filled, origin = _fill_floor_mask(xz, GRID_RES_M)
+    r = max(1, int(round(DOORWAY_BREAK_M / GRID_RES_M)))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+    eroded = cv2.erode(filled, kernel)
+
+    n, core_labels, stats, _ = cv2.connectedComponentsWithStats(eroded, connectivity=8)
+    cell_area = GRID_RES_M * GRID_RES_M
+
+    # Room-sized cores, largest first.
+    cores = [i for i in sorted(range(1, n), key=lambda i: -stats[i, cv2.CC_STAT_AREA])
+             if stats[i, cv2.CC_STAT_AREA] * cell_area >= MIN_ROOM_AREA_M2]
+    if not cores:
+        return [filled], origin, GRID_RES_M
+    if len(cores) == 1:
+        # Single room: recover the whole connected component it sits in.
+        return [_dominant_component(filled)], origin, GRID_RES_M
+
+    # Multiple rooms that may be MERGED in the filled mask (doorway bridged by
+    # the morphological close). Split every filled pixel to its nearest core
+    # via a distance transform from each core, so a shared blob is divided
+    # along the doorway rather than collapsed into one room.
+    h, w = filled.shape
+    best_dist = np.full((h, w), np.inf, np.float32)
+    assign = np.zeros((h, w), np.int32)
+    for ridx, i in enumerate(cores, start=1):
+        seed = np.ones((h, w), np.uint8)
+        seed[core_labels == i] = 0
+        dist = cv2.distanceTransform(seed, cv2.DIST_L2, 3)
+        closer = dist < best_dist
+        best_dist[closer] = dist[closer]
+        assign[closer] = ridx
+
+    masks = []
+    for ridx in range(1, len(cores) + 1):
+        m = ((filled > 0) & (assign == ridx)).astype(np.uint8) * 255
+        if int((m > 0).sum()) * cell_area >= MIN_ROOM_AREA_M2:
+            masks.append(m)
+    return (masks or [filled]), origin, GRID_RES_M
+
+
 if __name__ == "__main__":
     import sys
     import open3d as o3d

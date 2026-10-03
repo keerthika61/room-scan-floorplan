@@ -157,6 +157,34 @@ class TestRoomCount(unittest.TestCase):
         self.assertGreaterEqual(info["room_count"], 2)
         self.assertTrue(info["is_multi_room"])
 
+    def test_two_rooms_through_doorway_split(self):
+        """Two rooms joined by a 0.9 m doorway (so they MERGE in the filled
+        mask) must still be split into two by nearest-core assignment."""
+        from pipeline.room_segment import label_all_rooms
+        rng = np.random.default_rng(0)
+        pts = []
+        for _ in range(50000):   # room A 4x3
+            pts.append([rng.uniform(0, 4), 0.0, rng.uniform(0, 3)])
+        for _ in range(40000):   # room B 3x3
+            pts.append([rng.uniform(5, 8), 0.0, rng.uniform(0, 3)])
+        for _ in range(4000):    # 0.9 m doorway
+            pts.append([rng.uniform(4, 5), 0.0, rng.uniform(1.0, 1.9)])
+        masks, _, res = label_all_rooms(np.array(pts), floor_y=0.0)
+        self.assertEqual(len(masks), 2)
+        areas = sorted((m > 0).sum() * res * res for m in masks)
+        self.assertAlmostEqual(areas[0], 9.0, delta=1.5)
+        self.assertAlmostEqual(areas[1], 12.0, delta=1.5)
+
+    def test_single_room_not_oversplit(self):
+        """A single room must come back as exactly one room."""
+        from pipeline.room_segment import label_all_rooms
+        rng = np.random.default_rng(0)
+        pts = np.column_stack([rng.uniform(0, 4, 60000),
+                               np.zeros(60000),
+                               rng.uniform(0, 3, 60000)])
+        masks, _, _ = label_all_rooms(pts, floor_y=0.0)
+        self.assertEqual(len(masks), 1)
+
 
 class TestOrientation(unittest.TestCase):
     def test_recovers_known_rotation(self):
