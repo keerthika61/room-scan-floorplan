@@ -7,7 +7,7 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 | 1 | Capture route (Route 2: stock app + protocol) | `docs/CAPTURE_PROTOCOL.md` | One-page protocol | ✅ |
 | 2 | Device matrix (tier → hardware → accuracy) | `docs/CAPTURE_PROTOCOL.md` | Table | ✅ |
 | 3 | LiDAR tier pipeline | `pipeline/`, `run.py` | Runs end-to-end | ✅ |
-| 4 | Video tier | — | — | ❌ (described in report §7) |
+| 4 | Video tier | `pipeline/video.py`, `pipeline/colorize.py` | Validated video ingestion + RGB fusion | ◻ (reads rgb.mp4, verifies frame-alignment, fuses colour onto geometry; geometry-from-video-alone (monocular SLAM) is NOT done and is out of scope — stated plainly) |
 | 5 | Photo tier + whole-property stitch | — | — | ❌ (described in report §7) |
 | 6 | Per-room dimensioned plan (walls, area, outline) | `pipeline/room_outline.py`, `pipeline/room_segment.py`, `pipeline/render.py` | `floor_plan.png` | ◻ (dominant room isolated via doorway-break segmentation; multi-room split still future work) |
 | 7 | Ceiling height | `pipeline/planes.py` | `result.json → room.ceiling_height` | ✅ (±1.4 cm) |

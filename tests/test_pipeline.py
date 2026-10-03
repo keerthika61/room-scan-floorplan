@@ -271,6 +271,17 @@ class TestDeterminism(unittest.TestCase):
         )
 
 
+class TestVideoAlignmentIfDataPresent(unittest.TestCase):
+    def test_rgb_video_aligned_with_geometry(self):
+        """rgb.mp4 must be frame-aligned with odometry/depth for RGB fusion."""
+        scan = "sample_data/single_room/c00a170fe1"
+        if not os.path.exists(os.path.join(scan, "rgb.mp4")):
+            self.skipTest("sample scan not present")
+        from pipeline.video import check_alignment
+        a = check_alignment(scan)
+        self.assertTrue(a["aligned"], a)
+
+
 class TestEndToEndIfDataPresent(unittest.TestCase):
     def test_runs_on_existing_cloud(self):
         cloud = "outputs/c00a170fe1/cloud.ply"
