@@ -53,7 +53,7 @@ essentially unchanged (the fix corrects the *uncertainty*, not the estimate).
 ## 4. After
 
 ```
-ceiling_height = 3.0589 m
+ceiling_height = 3.059 m          (reproduces to ~3.06 m; last mm vary with --stride)
 ceiling_height_ci_half_width = 1.41 cm   -> PASS (gate <= 1.5 cm)
 ```
 
@@ -66,12 +66,22 @@ ceiling_height_ci_half_width = 1.41 cm   -> PASS (gate <= 1.5 cm)
 
 ## Regenerate
 
-```bash
-# BEFORE: checkout the commit tagged just before the fix, then:
-python -m fixloop.measure_ceiling outputs/c7d28f72c6/cloud.ply
+The fix is commit `0115ba4` ("Fix loop: tighten ceiling-height CI ...").
+Its parent is the pre-fix state.
 
-# AFTER: on the current commit:
-python -m fixloop.measure_ceiling outputs/c7d28f72c6/cloud.ply
+```bash
+# BEFORE: check out the fix's parent commit, rebuild the cloud, then measure:
+git checkout 0115ba4~1
+python run.py sample_data/single_scan_with_ceiling/c7d28f72c6
+python -m fixloop.measure_ceiling outputs/c7d28f72c6/cloud.ply   # CI 3.06 cm -> FAIL
+
+# AFTER: on the current commit (same commands):
+python -m fixloop.measure_ceiling outputs/c7d28f72c6/cloud.ply   # CI 1.41 cm -> PASS
 ```
+
+The headline result is the **CI (and gate verdict)**: 3.06 cm FAIL -> 1.41 cm
+PASS. The ceiling-height *value* reproduces to within a few mm (~3.06 m); its
+last digits depend on the frame `--stride` used to build the cloud, which is
+why we quote the uncertainty, not a bare number.
 
 Captured transcripts: `fixloop/before.txt`, `fixloop/after.txt`.
