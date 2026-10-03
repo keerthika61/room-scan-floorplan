@@ -17,11 +17,13 @@ The real room is a large, compact, wall-enclosed area. Through-doorway leaks
 connect to it only through narrow necks (a doorway is ~0.8-1.0 m wide). If we
 erode the filled floor region by a little more than half a doorway width, the
 narrow necks snap and the leaked regions fall off as separate blobs; the
-largest surviving blob is the room core. Dilating back restores its true size.
+largest surviving blob identifies the room core.
 
-This is a morphological opening with a doorway-sized kernel, then keep the
-largest connected component. Simple, fast, and makes no rectangular-room
-assumption.
+Erosion is used only to SELECT the right room. The room's extent is then taken
+from the matching connected component of the UN-eroded mask -- dilating the
+eroded core back would under-size the room by ~the kernel radius at every
+boundary (a bug an earlier version had; see git history / `TestKnownRoomAccuracy`).
+Simple, fast, and makes no rectangular-room assumption.
 """
 
 from __future__ import annotations
@@ -58,7 +60,8 @@ def _fill_floor_mask(xz: np.ndarray, res_m: float):
 
 
 def _dominant_component(mask: np.ndarray) -> np.ndarray:
-    """Open with a doorway-sized kernel, keep the largest blob, dilate back."""
+    """Erode to break doorway necks, pick the largest blob, then recover that
+    room's full extent from the original (un-eroded) mask."""
     r = max(1, int(round(DOORWAY_BREAK_M / GRID_RES_M)))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
 
@@ -97,9 +100,9 @@ def dominant_room_mask(points: np.ndarray, floor_y: float,
 
     `points` are world-frame. The method erodes the filled floor by a
     doorway-sized kernel to snap narrow necks, keeps the largest blob, and
-    dilates it back. If that dominant blob is too small a share of the whole
-    (no clear compact room), it falls back to the full footprint and says so
-    in `info["mode"]`.
+    recovers that room's full extent from the un-eroded mask. If the dominant
+    room is too small a share of the whole (no clear compact room), it falls
+    back to the full footprint and says so in `info["mode"]`.
     """
     band = (points[:, 1] >= floor_y - 0.05) & (points[:, 1] <= floor_y + footprint_band_m)
     xz = points[band][:, [0, 2]]
