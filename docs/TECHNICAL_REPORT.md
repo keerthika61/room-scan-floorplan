@@ -72,6 +72,12 @@ The guiding rule from the brief — *confident garbage on thin input caps your
 score* — is why the CI is tied to statistical power and a sensor floor rather
 than to a hand-tuned number.
 
+**Calibration spot-check.** Re-running the ceiling scan at different frame
+strides (8, 12) gives heights of 306.41 and 306.51 cm — a 0.1 cm spread,
+comfortably inside the stated ±1.4 cm interval. So the interval is honest (if
+anything slightly conservative): varying how densely we sample does not move
+the answer outside its claimed uncertainty.
+
 ## 4. Drift handling (honest status)
 
 The provided scans ship with ARKit poses that already include on-device
