@@ -68,12 +68,20 @@ def _dominant_component(mask: np.ndarray) -> np.ndarray:
         # Erosion removed everything (tiny/odd room) -> fall back to input.
         return mask
     biggest = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-    core = np.where(labels == biggest, 255, 0).astype(np.uint8)
+    core = (labels == biggest).astype(np.uint8)
 
-    # Grow the core back to its original extent, but clip to the original
-    # mask so we never invent floor the scan did not see.
-    regrown = cv2.dilate(core, kernel)
-    return (regrown & mask).astype(np.uint8)
+    # Erosion is used only to SELECT the right room (break doorway necks and
+    # pick the dominant blob). To avoid shrinking the room, recover its exact
+    # ORIGINAL extent: keep whichever connected component of the untouched
+    # `mask` the core overlaps. Dilating the eroded core back would under-size
+    # the room by ~the kernel radius at every boundary; this does not.
+    n2, labels2, _, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    overlap_labels = labels2[core.astype(bool)]
+    overlap_labels = overlap_labels[overlap_labels > 0]
+    if overlap_labels.size == 0:
+        return mask
+    room_label = np.bincount(overlap_labels).argmax()
+    return np.where(labels2 == room_label, 255, 0).astype(np.uint8)
 
 
 # If the dominant room is this small a share of the full coverage, the scan

@@ -113,17 +113,23 @@ not two physical captures — stated plainly in `docs/REPEATABILITY.md`.
 
 ## 5b. Per-room segmentation
 
-`room_segment.py` isolates the dominant enclosed room before the outline is
-traced. The filled floor mask is **morphologically opened** with a
-doorway-sized kernel (~0.55 m radius): eroding by a little over half a doorway
-width snaps the narrow necks that connect the room to spaces seen through open
-doors, the largest surviving blob is kept as the room core, and it is dilated
-back and clipped to the original coverage. When no single compact region
-dominates (its area is < 35 % of the full coverage — e.g. a corridor-heavy
-capture), the pipeline **falls back to the full footprint** and records this in
-`result.json → room.segmentation_mode`. On the two multi-area sample scans this
-drops ~30 % of through-doorway area; on the corridor-like scan it honestly
-falls back rather than over-cropping.
+`room_segment.py` isolates the dominant room before the outline is traced. The
+filled floor mask is eroded with a doorway-sized kernel (~0.55 m radius) so the
+narrow necks that connect a room to spaces seen through open doors are broken;
+the largest surviving blob selects the room. Crucially, the room's **extent is
+then recovered from the untouched original mask** (the connected component the
+core sits in), not by dilating the eroded core back — dilating back under-sizes
+the room by roughly the kernel radius at every boundary. A synthetic 4×3 m room
+(area 12 m²) is recovered to **0.5 % area / 0.2 % perimeter** with this
+approach, versus ~7 % error when dilating back (fixed; see git history and the
+`TestKnownRoomAccuracy` test).
+
+On the three sample scans the dominant component is 93–96 % of the full
+footprint — i.e. these captures are essentially **single connected open
+spaces**, so segmentation's effective job here is to drop detached noise blobs
+rather than carve off large neighbouring rooms. Genuinely separate rooms (as in
+the synthetic multi-room test) are correctly split; this is reported via
+`capture.separable_room_count`.
 
 ## 6. Known failure modes
 

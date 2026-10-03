@@ -124,6 +124,26 @@ class TestRoomCount(unittest.TestCase):
         self.assertTrue(info["is_multi_room"])
 
 
+class TestKnownRoomAccuracy(unittest.TestCase):
+    def test_synthetic_4x3_room(self):
+        """A perfect 4x3 m room (12 m^2) must be recovered to within ~2%."""
+        from pipeline.room_outline import compute_room_outline
+        rng = np.random.default_rng(0)
+        pts = []
+        for _ in range(60000):
+            pts.append([rng.uniform(0, 4), rng.normal(0, 0.003), rng.uniform(0, 3)])
+        for _ in range(40000):
+            side = rng.integers(0, 4)
+            if side == 0:   p = [rng.uniform(0, 4), rng.uniform(0, 2), 0.0]
+            elif side == 1: p = [rng.uniform(0, 4), rng.uniform(0, 2), 3.0]
+            elif side == 2: p = [0.0, rng.uniform(0, 2), rng.uniform(0, 3)]
+            else:           p = [4.0, rng.uniform(0, 2), rng.uniform(0, 3)]
+            pts.append(p)
+        ro = compute_room_outline(np.array(pts), floor_y=0.0)
+        self.assertAlmostEqual(ro.floor_area_m2, 12.0, delta=0.5)   # <~4%
+        self.assertAlmostEqual(sum(ro.wall_lengths_m), 14.0, delta=0.6)
+
+
 class TestOpenings(unittest.TestCase):
     def test_known_doorway_width(self):
         """A synthetic wall with a known 0.90 m gap must measure ~0.90 m."""
