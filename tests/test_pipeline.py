@@ -93,6 +93,20 @@ class TestFloorCeiling(unittest.TestCase):
         self.assertIsNone(res.ceiling)
         self.assertIsNone(res.ceiling_height_m)
 
+    def test_floor_not_confused_when_ceiling_denser(self):
+        """Floor is found by position, not point count: a ceiling with 5x more
+        points must not be mistaken for the floor."""
+        rng = np.random.default_rng(0)
+        pts = []
+        for _ in range(10000):
+            pts.append([rng.uniform(0, 4), rng.normal(0, 0.004), rng.uniform(0, 3)])
+        for _ in range(50000):  # much denser ceiling
+            pts.append([rng.uniform(0, 4), rng.normal(2.7, 0.004), rng.uniform(0, 3)])
+        res = find_floor_ceiling(np.array(pts))
+        self.assertAlmostEqual(res.floor.height, 0.0, delta=0.02)
+        self.assertIsNotNone(res.ceiling)
+        self.assertAlmostEqual(res.ceiling_height_m, 2.70, delta=0.02)
+
 
 class _FakeOutline:
     polygon_xz = np.array([[0, 0], [3, 0], [3, 4], [0, 4]], float)
@@ -178,6 +192,11 @@ class TestKnownRoomAccuracy(unittest.TestCase):
         ro = compute_room_outline(np.array(pts), floor_y=0.0)
         self.assertAlmostEqual(ro.floor_area_m2, 12.0, delta=0.5)   # <~4%
         self.assertAlmostEqual(sum(ro.wall_lengths_m), 14.0, delta=0.6)
+        # On a clean room the simplified outline should recover the 4 true
+        # walls (lengths ~4, 4, 3, 3) among its longest edges.
+        longest = sorted(ro.wall_lengths_m, reverse=True)[:4]
+        self.assertAlmostEqual(longest[0], 4.0, delta=0.15)
+        self.assertAlmostEqual(longest[2], 3.0, delta=0.15)
 
 
 class TestOpenings(unittest.TestCase):
