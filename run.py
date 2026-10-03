@@ -84,7 +84,13 @@ def main(argv: list[str]) -> int:
         print(f"ERROR: not a folder: {args.scan_folder}", file=sys.stderr)
         return 2
 
-    process(args.scan_folder, args.stride, args.out)
+    try:
+        process(args.scan_folder, args.stride, args.out)
+    except (FileNotFoundError, ValueError) as e:
+        # Expected input problems (missing files, no usable frames): report
+        # cleanly instead of dumping a traceback.
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
     return 0
 
 
