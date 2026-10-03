@@ -12,7 +12,7 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 | 6 | Per-room dimensioned plan (walls, area, outline) | `pipeline/room_outline.py`, `pipeline/room_segment.py`, `pipeline/render.py` | `floor_plan.png` | ◻ (dominant room isolated via doorway-break segmentation; multi-room split still future work) |
 | 7 | Ceiling height | `pipeline/planes.py` | `result.json → room.ceiling_height` | ✅ (±1.4 cm) |
 | 8 | Stitched multi-room plan with adjacency | `pipeline/room_segment.py` (`count_separable_rooms`) | `result.json → capture.separable_room_count` | ◻ (detects how many rooms a capture contains; all 3 samples are single open spaces, so stitching has nothing to stitch. Multi-room split is the documented next step) |
-| 9 | Per-surface damage regions + class + extent | — | — | ❌ (not in scope of this build) |
+| 9 | Per-surface damage regions + class + extent | `pipeline/anomaly.py` | Unsupervised chroma-anomaly indicator | ◻ (scaffold only: flags discolouration regions, verified it finds a staged synthetic stain and nothing on a clean wall. NOT a trained/validated classifier, NO damage classes, NO metric extent. Sample scans contain no staged damage, so a real classifier cannot be trained/validated here — stated plainly) |
 | 10 | Concealed-damage flags | — | — | ❌ |
 | 11 | Scope line items keyed to surfaces | — | — | ❌ |
 | 12 | Confidence interval on every measurement | `pipeline/result_schema.py` | `result.json` CIs | ✅ |

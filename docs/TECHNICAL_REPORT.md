@@ -195,6 +195,12 @@ the synthetic multi-room test) are correctly split; this is reported via
    is very jagged (currently it can miss openings there).
 4. **Photo/video tiers**: learned monocular depth + multi-view scale for the
    photo tier; monocular SLAM for video — with honestly wider intervals.
+5. **Damage detection**: `pipeline/anomaly.py` is the unsupervised scaffold
+   (flags discolouration regions; verified on a synthetic stain). A real system
+   needs a trained classifier for damage classes + metric extent via the depth
+   of each flagged pixel + concealed-damage rules. The sample data has no
+   staged damage to train or validate against, so only the scaffold is built,
+   and it is labelled as an indicator, not a classifier.
 
 ## 8. Reproducibility
 

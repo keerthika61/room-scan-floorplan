@@ -271,6 +271,19 @@ class TestDeterminism(unittest.TestCase):
         )
 
 
+class TestAnomalyIndicator(unittest.TestCase):
+    def test_finds_stain_not_clean_wall(self):
+        """The unsupervised indicator flags a staged stain and nothing on a
+        clean wall (it is a scaffold, not a validated damage classifier)."""
+        from pipeline.anomaly import find_anomalies
+        stained = np.full((400, 400, 3), 200, np.uint8)
+        stained[150:250, 150:280] = [120, 90, 60]   # brown stain
+        found = find_anomalies(stained)
+        self.assertEqual(len(found), 1)
+        clean = np.full((400, 400, 3), 200, np.uint8)
+        self.assertEqual(len(find_anomalies(clean)), 0)
+
+
 class TestVideoAlignmentIfDataPresent(unittest.TestCase):
     def test_rgb_video_aligned_with_geometry(self):
         """rgb.mp4 must be frame-aligned with odometry/depth for RGB fusion."""
