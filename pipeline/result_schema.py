@@ -33,7 +33,7 @@ def build_result(scan_name: str, height, outline, n_points: int,
     walls = [
         {
             "index": i,
-            "length": _measure(L, ci, "m", "rectilinear_outline"),
+            "length": _measure(L, ci, "m", "simplified_outline_edge"),
         }
         for i, (L, ci) in enumerate(
             zip(outline.wall_lengths_m, outline.wall_length_ci_m)

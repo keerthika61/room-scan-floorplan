@@ -15,9 +15,13 @@ The first-pass footprint traced raw floor coverage and produced a jagged
      enclosed room (breaking narrow doorway necks), or falls back to the full
      footprint when no single compact room dominates.
 
-  3. Outline: we trace the contour, simplify it, then SNAP each edge to the
-     nearest axis (horizontal or vertical). Short spurs are merged. The
-     result is a rectilinear polygon whose edges are real walls.
+  3. Outline: we trace the contour of the room mask and simplify it
+     (Douglas-Peucker), then drop sub-threshold spurs. The result is a
+     simplified free-form polygon whose edges approximate the walls. We do
+     NOT force axis-alignment: the sample captures are large, organically
+     shaped spaces, so a rectilinear assumption would misrepresent them.
+     Orientation is still estimated and removed so the simplification works in
+     a consistent frame.
 
 Everything is reported back in the ORIGINAL world frame so measurements and
 rendering stay consistent with the rest of the pipeline.
@@ -94,35 +98,26 @@ def _rotation_matrix(theta: float) -> np.ndarray:
     return np.array([[c, -s], [s, c]])
 
 
-def _rectilinear_polygon(mask: np.ndarray, origin: np.ndarray) -> np.ndarray:
-    """Contour -> simplify -> snap edges to axes -> drop tiny spurs."""
+def _outline_polygon(mask: np.ndarray, origin: np.ndarray) -> np.ndarray:
+    """Trace the room mask contour, convert to world metres, simplify, clean."""
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnt = max(contours, key=cv2.contourArea)
     eps = SIMPLIFY_TOL_M / GRID_RES_M
     poly = cv2.approxPolyDP(cnt, eps, True).reshape(-1, 2).astype(np.float64)
     poly[:, 0] = origin[0] + poly[:, 0] * GRID_RES_M
     poly[:, 1] = origin[1] + poly[:, 1] * GRID_RES_M
+    return _merge_short_edges(poly)
 
-    # Snap each edge to horizontal or vertical by moving the shorter axis.
-    k = len(poly)
-    for i in range(k):
-        a = poly[i]
-        b = poly[(i + 1) % k]
-        d = b - a
-        if abs(d[0]) >= abs(d[1]):
-            mid = 0.5 * (a[1] + b[1])     # horizontal edge -> equalize Z
-            poly[i][1] = poly[(i + 1) % k][1] = mid
-        else:
-            mid = 0.5 * (a[0] + b[0])     # vertical edge -> equalize X
-            poly[i][0] = poly[(i + 1) % k][0] = mid
 
-    # Merge consecutive near-duplicate / tiny edges.
+def _merge_short_edges(poly: np.ndarray) -> np.ndarray:
+    """Drop vertices that create sub-MIN_WALL_LEN_M edges (removes jitter)."""
+    if len(poly) < 4:
+        return poly
     cleaned = [poly[0]]
     for p in poly[1:]:
         if np.linalg.norm(p - cleaned[-1]) >= MIN_WALL_LEN_M:
             cleaned.append(p)
-    cleaned = np.array(cleaned)
-    return cleaned
+    return np.array(cleaned)
 
 
 def _polygon_area(poly: np.ndarray) -> float:
@@ -144,7 +139,7 @@ def compute_room_outline(points: np.ndarray, floor_y: float) -> RoomOutline:
     # single compact room dominates (and records which happened).
     room, origin, _, seg_info = dominant_room_mask(pts_rot, floor_y,
                                                    footprint_band_m=FOOTPRINT_BAND_M)
-    poly_rot = _rectilinear_polygon(room, origin)
+    poly_rot = _outline_polygon(room, origin)
 
     # Rotate polygon back to the original world frame.
     poly_world = poly_rot @ R  # inverse of R.T is R since R orthonormal

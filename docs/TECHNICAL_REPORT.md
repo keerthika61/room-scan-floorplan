@@ -20,7 +20,7 @@ scan folder
   -> pointcloud      back-project depth, place by pose, fuse, filter, downsample
   -> planes          floor + ceiling via robust plane fit -> ceiling height
   -> room_segment    isolate the dominant enclosed room (break doorway necks)
-  -> room_outline    orientation estimate -> rectilinear poly on the room mask
+  -> room_outline    orientation estimate -> simplified outline of room mask
   -> openings        door/window widths from gaps in wall-height density
   -> render          top-down floor plan PNG
   -> result_schema   JSON with value + CI + method for every measurement
