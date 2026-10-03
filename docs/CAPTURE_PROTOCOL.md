@@ -38,7 +38,7 @@ python run.py path/to/<scan_folder>
 
 | Tier   | Hardware                              | What it delivers | Honest accuracy (this build) |
 |--------|---------------------------------------|------------------|------------------------------|
-| LiDAR  | iPhone 12 Pro and newer "Pro" models, iPad Pro | Depth + poses + intrinsics | Ceiling height ±1.4 cm; floor area with calibrated CI. **Implemented.** |
+| LiDAR  | iPhone 12 Pro and newer "Pro" models, iPad Pro | Depth + poses + intrinsics | **Implemented.** On the sample ceiling scan: ceiling height ±1.4 cm; floor area and every length carry a per-measurement calibrated CI (not a fixed spec — the CI is computed per scan from statistical power + a sensor floor). |
 | Video  | Any iPhone 15+                        | RGB walkthrough, no depth | Not implemented in this build; would need monocular SLAM + scale. |
 | Photo  | Any iPhone 15+                        | 2-8 stills per room | Not implemented in this build; would need multi-view/learned depth. |
 

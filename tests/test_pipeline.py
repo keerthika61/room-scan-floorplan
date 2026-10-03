@@ -124,6 +124,30 @@ class TestRoomCount(unittest.TestCase):
         self.assertTrue(info["is_multi_room"])
 
 
+class TestOpenings(unittest.TestCase):
+    def test_known_doorway_width(self):
+        """A synthetic wall with a known 0.90 m gap must measure ~0.90 m."""
+        from pipeline.openings import detect_openings
+        rng = np.random.default_rng(0)
+        pts = []
+        for x in np.linspace(0, 4, 400):
+            if 1.5 <= x <= 2.4:   # 0.9 m doorway gap
+                continue
+            for y in np.linspace(0.1, 2.0, 40):
+                pts.append([x, y, rng.normal(0, 0.002)])
+        pts = np.array(pts)
+
+        class O:
+            polygon_xz = np.array([[0.0, 0.0], [4.0, 0.0], [4.0, 3.0], [0.0, 3.0]])
+            wall_lengths_m = [4.0, 3.0, 4.0, 3.0]
+
+        ops = detect_openings(pts, floor_y=0.0, outline=O())
+        self.assertEqual(len(ops), 1)
+        self.assertAlmostEqual(ops[0].width_m, 0.90, delta=0.10)
+        self.assertAlmostEqual(ops[0].center_xz[0], 1.95, delta=0.15)
+        self.assertEqual(ops[0].kind, "door")
+
+
 class TestDeterminism(unittest.TestCase):
     def test_geometry_is_deterministic(self):
         """Same cloud in -> bit-identical measurements out (reproducibility)."""
