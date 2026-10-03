@@ -37,9 +37,7 @@ import numpy as np
 from .room_segment import dominant_room_mask
 
 GRID_RES_M = 0.02
-WALL_BAND_LOW_M = 0.3      # wall slice: this far above floor ...
-WALL_BAND_HIGH_M = 1.5     # ... up to here (avoid floor + ceiling clutter)
-FOOTPRINT_BAND_M = 0.12
+FOOTPRINT_BAND_M = 0.12    # keep points from floor up to here for the footprint
 SIMPLIFY_TOL_M = 0.10
 MIN_WALL_LEN_M = 0.25      # drop outline edges shorter than this
 
