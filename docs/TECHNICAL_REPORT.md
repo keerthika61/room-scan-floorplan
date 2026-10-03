@@ -145,9 +145,12 @@ falls back rather than over-cropping.
 
 ## 7. What I would do next (planned, not claimed)
 
-1. **Multi-room split**: extend the dominant-room segmentation to label and
-   outline *every* room separately (not just the dominant one), then stitch
-   them into a whole-property plan with adjacency.
+1. **Multi-room split**: the pipeline already *counts* separable rooms
+   (`count_separable_rooms`, reported in `result.json → capture`). All three
+   sample captures are single open spaces (one room-sized core each), so there
+   is nothing to stitch here; the next step is to outline *every* detected room
+   and stitch them with adjacency when a capture actually contains several
+   (verified by a synthetic two-room unit test).
 2. **Drift correction**: pose-graph optimization with plane-anchored loop
    closure, plus an on/off ablation on the multi-room footprint.
 3. **Openings on jagged outlines**: openings are already detected as

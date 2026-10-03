@@ -28,7 +28,7 @@ def _measure(value, ci, unit, method, note=""):
 
 
 def build_result(scan_name: str, height, outline, n_points: int,
-                 openings=None) -> dict[str, Any]:
+                 openings=None, rooms=None) -> dict[str, Any]:
     """Compose the full result dict for a scan from the stage outputs."""
     walls = [
         {
@@ -63,6 +63,11 @@ def build_result(scan_name: str, height, outline, n_points: int,
         "scan": scan_name,
         "tier": "lidar",
         "point_count": int(n_points),
+        "capture": {
+            "separable_room_count": (rooms or {}).get("room_count", 1),
+            "is_multi_room": (rooms or {}).get("is_multi_room", False),
+            "room_core_areas_m2": (rooms or {}).get("room_core_areas_m2", []),
+        },
         "room": {
             "floor_area": _measure(
                 outline.floor_area_m2, outline.floor_area_ci_m2, "m^2",

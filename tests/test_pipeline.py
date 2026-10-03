@@ -106,6 +106,24 @@ class TestResultSchema(unittest.TestCase):
         self.assertEqual(room["wall_count"], 4)
 
 
+class TestRoomCount(unittest.TestCase):
+    def test_two_separated_rooms_detected(self):
+        from pipeline.room_segment import count_separable_rooms
+        rng = np.random.default_rng(1)
+        # Two 3x3 m floor patches separated by a 1.5 m gap (no connecting floor)
+        # -> two distinct room cores.
+        def patch(cx, cz):
+            return np.column_stack([
+                rng.uniform(cx - 1.5, cx + 1.5, 8000),
+                np.zeros(8000),
+                rng.uniform(cz - 1.5, cz + 1.5, 8000),
+            ])
+        pts = np.vstack([patch(0, 0), patch(0, 6)])
+        info = count_separable_rooms(pts, floor_y=0.0)
+        self.assertGreaterEqual(info["room_count"], 2)
+        self.assertTrue(info["is_multi_room"])
+
+
 class TestEndToEndIfDataPresent(unittest.TestCase):
     def test_runs_on_existing_cloud(self):
         cloud = "outputs/c00a170fe1/cloud.ply"

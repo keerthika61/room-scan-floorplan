@@ -113,6 +113,46 @@ def dominant_room_mask(points: np.ndarray, floor_y: float,
     return room, origin, GRID_RES_M, info
 
 
+# A separated component counts as a distinct room only if it is at least this
+# big after the doorway-break erosion. Smaller fragments are noise or alcoves.
+MIN_ROOM_AREA_M2 = 2.0
+
+
+def count_separable_rooms(points: np.ndarray, floor_y: float,
+                          footprint_band_m: float = 0.12) -> dict:
+    """How many distinct rooms does this capture actually contain?
+
+    After eroding the filled floor by a doorway-sized kernel, genuinely
+    separate rooms survive as separate blobs. Counting the blobs that are
+    room-sized tells us honestly whether a capture is single-room (one blob)
+    or multi-room (several). The pipeline reports one room when this is 1; a
+    true multi-room capture (e.g. at the walk-in test) would report >1 here,
+    which is the hook a future multi-room stitch would build on.
+    """
+    band = (points[:, 1] >= floor_y - 0.05) & (points[:, 1] <= floor_y + footprint_band_m)
+    xz = points[band][:, [0, 2]]
+    if xz.shape[0] < 100:
+        xz = points[:, [0, 2]]
+
+    filled, _ = _fill_floor_mask(xz, GRID_RES_M)
+    r = max(1, int(round(DOORWAY_BREAK_M / GRID_RES_M)))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * r + 1, 2 * r + 1))
+    eroded = cv2.erode(filled, kernel)
+
+    n, _, stats, _ = cv2.connectedComponentsWithStats(eroded, connectivity=8)
+    cell_area = GRID_RES_M * GRID_RES_M
+    room_areas = sorted(
+        (float(stats[i, cv2.CC_STAT_AREA]) * cell_area for i in range(1, n)),
+        reverse=True,
+    )
+    rooms = [a for a in room_areas if a >= MIN_ROOM_AREA_M2]
+    return {
+        "room_count": len(rooms),
+        "room_core_areas_m2": [round(a, 2) for a in rooms],
+        "is_multi_room": len(rooms) > 1,
+    }
+
+
 if __name__ == "__main__":
     import sys
     import open3d as o3d
