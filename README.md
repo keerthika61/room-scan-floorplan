@@ -18,7 +18,7 @@ Given one scan folder, the pipeline produces:
 ## Validated accuracy (vs. synthetic ground truth)
 
 Each core measurement is checked against inputs with known answers
-(`python -m unittest discover tests`, 13 tests):
+(`python -m unittest discover tests`, 18 tests):
 
 | Measurement | Ground-truth test | Result |
 |-------------|-------------------|--------|
@@ -56,7 +56,9 @@ pipeline/
   room_segment.py          isolate dominant room; count separable rooms
   room_outline.py          orientation (minAreaRect) + simplified outline, areas
   openings.py              door/window widths from wall-density gaps
+  video.py                 rgb.mp4 ingestion + frame-alignment check
   colorize.py              RGB-colored point cloud from aligned rgb.mp4 (--colorize)
+  anomaly.py               unsupervised surface-anomaly indicator (damage scaffold)
   render.py                top-down floor plan PNG
   result_schema.py         JSON result (value + CI + method on every measurement)
 tests/test_pipeline.py     13 tests incl. ground-truth accuracy checks
