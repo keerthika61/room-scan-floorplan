@@ -83,7 +83,6 @@ def build_colored_point_cloud(
 
                 pts_all.append(world.astype(np.float32))
                 col_all.append(cols)
-        pos += 1
 
     cap.release()
     if not pts_all:
