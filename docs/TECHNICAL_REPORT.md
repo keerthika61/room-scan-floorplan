@@ -162,8 +162,11 @@ falls back rather than over-cropping.
 ## 8. Reproducibility
 
 - One command per capture: `python run.py <scan_folder>`.
-- Deterministic given a scan and `--stride`; outputs regenerate from raw
-  inputs.
+- **Deterministic**: given a scan and `--stride`, both the fused point cloud
+  and the measurements are bit-identical across runs (verified — point cloud
+  `np.array_equal` across repeats, and a determinism unit test on the
+  geometry). No RNG in the measurement path, so reported numbers regenerate
+  exactly from raw inputs.
 - Dependencies pinned in `requirements.txt`; large data is fetched/placed
   separately, never committed.
 - Git history is incremental and matches the build order, by design.

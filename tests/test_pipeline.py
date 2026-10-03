@@ -124,6 +124,26 @@ class TestRoomCount(unittest.TestCase):
         self.assertTrue(info["is_multi_room"])
 
 
+class TestDeterminism(unittest.TestCase):
+    def test_geometry_is_deterministic(self):
+        """Same cloud in -> bit-identical measurements out (reproducibility)."""
+        cloud = "outputs/c00a170fe1/cloud.ply"
+        if not os.path.exists(cloud):
+            self.skipTest("no built cloud present; run `python run.py <scan>` first")
+        import open3d as o3d
+        from pipeline.room_outline import compute_room_outline
+
+        pts = np.asarray(o3d.io.read_point_cloud(cloud).points)
+        fy = find_floor_ceiling(pts).floor.height
+        a = compute_room_outline(pts, fy)
+        b = compute_room_outline(pts, fy)
+        self.assertEqual(round(a.floor_area_m2, 6), round(b.floor_area_m2, 6))
+        self.assertEqual(
+            [round(x, 6) for x in a.wall_lengths_m],
+            [round(x, 6) for x in b.wall_lengths_m],
+        )
+
+
 class TestEndToEndIfDataPresent(unittest.TestCase):
     def test_runs_on_existing_cloud(self):
         cloud = "outputs/c00a170fe1/cloud.ply"
