@@ -27,6 +27,7 @@ import numpy as np
 
 from pipeline.scan_reader import load_scan
 from pipeline.pointcloud import build_point_cloud, save_point_cloud
+from pipeline.colorize import build_colored_point_cloud
 from pipeline.planes import find_floor_ceiling
 from pipeline.room_outline import compute_room_outline
 from pipeline.room_segment import count_separable_rooms
@@ -35,7 +36,7 @@ from pipeline.render import render_floor_plan
 from pipeline.result_schema import build_result
 
 
-def process(scan_dir: str, stride: int, out_root: str) -> dict:
+def process(scan_dir: str, stride: int, out_root: str, colorize: bool = False) -> dict:
     t0 = time.time()
     scan = load_scan(scan_dir)
     out_dir = Path(out_root) / scan.name
@@ -68,6 +69,15 @@ def process(scan_dir: str, stride: int, out_root: str) -> dict:
     with open(out_dir / "result.json", "w") as f:
         json.dump(result, f, indent=2)
     print(f"[5/5] Wrote result.json + floor_plan.png  ({result['timing_seconds']}s)")
+
+    if colorize:
+        try:
+            cpcd = build_colored_point_cloud(scan, frame_stride=max(stride, 10))
+            save_point_cloud(cpcd, out_dir / "cloud_colored.ply")
+            print(f"      + cloud_colored.ply ({len(cpcd.points):,} RGB points)")
+        except (FileNotFoundError, ValueError) as e:
+            print(f"      (colorize skipped: {e})")
+
     print(f"      -> {out_dir}")
     return result
 
@@ -78,6 +88,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--stride", type=int, default=5,
                     help="Use every Nth frame (higher = faster, coarser)")
     ap.add_argument("--out", default="outputs", help="Output root directory")
+    ap.add_argument("--colorize", action="store_true",
+                    help="Also produce an RGB-colored point cloud from rgb.mp4")
     args = ap.parse_args(argv)
 
     if not Path(args.scan_folder).is_dir():
@@ -85,7 +97,7 @@ def main(argv: list[str]) -> int:
         return 2
 
     try:
-        process(args.scan_folder, args.stride, args.out)
+        process(args.scan_folder, args.stride, args.out, colorize=args.colorize)
     except (FileNotFoundError, ValueError) as e:
         # Expected input problems (missing files, no usable frames): report
         # cleanly instead of dumping a traceback.

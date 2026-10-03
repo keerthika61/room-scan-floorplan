@@ -56,6 +56,7 @@ pipeline/
   room_segment.py          isolate dominant room; count separable rooms
   room_outline.py          orientation (minAreaRect) + simplified outline, areas
   openings.py              door/window widths from wall-density gaps
+  colorize.py              RGB-colored point cloud from aligned rgb.mp4 (--colorize)
   render.py                top-down floor plan PNG
   result_schema.py         JSON result (value + CI + method on every measurement)
 tests/test_pipeline.py     13 tests incl. ground-truth accuracy checks

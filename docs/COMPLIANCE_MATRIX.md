@@ -21,6 +21,7 @@ Honest status of each requirement. Legend: ✅ done · ◻ partial · ❌ not in
 | 15 | Rendered plan | `pipeline/render.py` | `floor_plan.png` | ✅ |
 | 15b | Benchmark summary across scans | `fixloop/benchmark_summary.py` | `docs/BENCHMARK.md` | ✅ |
 | 15c | Smoke tests | `tests/test_pipeline.py` | `python -m unittest discover tests` | ✅ |
+| 15d | RGB point cloud (geometry+colour fusion) | `pipeline/colorize.py` | `cloud_colored.ply` (`run.py --colorize`) | ✅ (colour from aligned rgb.mp4; depth still LiDAR — not a monocular video tier) |
 | 16 | Opening widths (doors/windows) | `pipeline/openings.py` | `result.json → room.openings`, markers on `floor_plan.png` | ◻ (detected as wall-density gaps with width CIs; conservative, can miss on jagged outlines) |
 | 17 | Repeatability gate | `fixloop/repeatability.py`, `docs/REPEATABILITY.md` | Frame-split proxy: perimeter 0.12%, area 0.49% (both < 0.5% gate) | ◻ (proxy, not two physical captures; honestly flagged) |
 | 18 | Drift accountability + ablation | `docs/TECHNICAL_REPORT.md §4` | Honest "poses as-is" statement | ◻ (stated, not corrected) |
