@@ -42,7 +42,7 @@ def build_result(scan_name: str, height, outline, n_points: int,
 
     openings_json = [
         {
-            "wall_index": o.wall_index,
+            "outline_edge_index": o.wall_index,
             "kind": o.kind,
             "width": _measure(o.width_m, o.width_ci_m, "m", "wall_density_gap"),
             "center_xz": [round(o.center_xz[0], 4), round(o.center_xz[1], 4)],
