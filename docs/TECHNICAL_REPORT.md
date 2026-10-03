@@ -56,6 +56,13 @@ empirically by a dominant floor spike in the Y histogram. Floor and ceiling
 are therefore horizontal slabs, recovered as 1-D peaks along Y rather than by
 expensive 3-D plane search.
 
+**Pose convention sanity check.** The odometry poses are camera-to-world. Two
+independent facts confirm this (rather than an inverted convention that might
+coincidentally pass the floor-flatness test): the camera translations trace a
+path that lies *inside* the room's X-Z footprint, and sit a consistent
+**~1.40 m above the floor** — i.e. exactly handheld/chest height. An inverted
+pose would place the camera path outside the room at nonsensical heights.
+
 ## 3. Error budget and calibration
 
 Calibration is treated as a first-class output, not decoration. Every
