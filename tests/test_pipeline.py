@@ -67,6 +67,26 @@ class TestFloorCeiling(unittest.TestCase):
         # CI should be tight for a clean synthetic slab.
         self.assertLess(res.ceiling_height_ci_m, 0.015)
 
+    def test_ceiling_height_unbiased_with_clutter(self):
+        """Known heights recovered to <5 mm even with hanging-fixture outliers,
+        and the true height falls inside the reported CI (honest calibration).
+        """
+        for true_h in (2.40, 2.70, 3.00):
+            rng = np.random.default_rng(0)
+            pts = []
+            for _ in range(40000):
+                pts.append([rng.uniform(0, 4), rng.normal(0.0, 0.004), rng.uniform(0, 3)])
+            for _ in range(30000):
+                pts.append([rng.uniform(0, 4), rng.normal(true_h, 0.004), rng.uniform(0, 3)])
+            for _ in range(2000):  # light fixture 15 cm below ceiling
+                pts.append([rng.uniform(1.5, 2.5), true_h - 0.15 + rng.normal(0, 0.01),
+                            rng.uniform(1.0, 2.0)])
+            res = find_floor_ceiling(np.array(pts))
+            self.assertIsNotNone(res.ceiling)
+            self.assertAlmostEqual(res.ceiling_height_m, true_h, delta=0.005)
+            self.assertLessEqual(abs(res.ceiling_height_m - true_h),
+                                 res.ceiling_height_ci_m)
+
     def test_floor_only_reports_no_ceiling(self):
         pts = self._synthetic_room(with_ceiling=False)
         res = find_floor_ceiling(pts)
